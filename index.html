@@ -67,17 +67,19 @@
         "esri/core/reactiveUtils",
         "esri/geometry/support/webMercatorUtils",
         "esri/widgets/Search",
+        "esri/widgets/BasemapGallery",
+        "esri/widgets/Expand",
       ], (
         esriConfig,
         EsriMap,
         EsriMapView,
         EsriReactiveUtils,
         EsriWMUtils,
-        EsriSearch
+        EsriSearch,
+        EsriBasemapGallery,
+        EsriExpand
       ) => {
         // esriConfig.apiKey = "YOUR_API_KEY"
-
-        let search = null;
 
         const copy2ClipBoard = (evt) => {
           const clp = navigator.clipboard
@@ -108,8 +110,6 @@
         });
 
         const viewDidLoad = () => {
-          console.log("view did load");
-
           EsriReactiveUtils.watch(
             () => [
               view.center,
@@ -146,8 +146,25 @@
             }
           );
 
-          search = new EsriSearch({ view: view });
-          view.ui.add(search, { position: "top-right" });
+          const search = new EsriSearch({ view: view });
+          const searchExpand = new EsriExpand({
+            expandIcon: "search",
+            view: view,
+            content: search,
+            group: "bottom-right",
+          });
+          view.ui.add(searchExpand, { position: "top-right" });
+
+          const bmg = new EsriBasemapGallery({ view: view });
+          const bmgExpand = new EsriExpand({
+            expandIcon: "basemap",
+            view: view,
+            content: bmg,
+            autoCollapse: true,
+            closeOnEsc: true,
+            group: "bottom-right",
+          });
+          view.ui.add([searchExpand, bmgExpand], "bottom-right");
         };
 
         view.when(viewDidLoad);
