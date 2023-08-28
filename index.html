@@ -1,0 +1,297 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>X-Tent</title>
+
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #cntrlDiv {
+        display: flex;
+        flex-direction: column;
+        width: 40%;
+        padding: 5px;
+        margin: 5px;
+      }
+
+      .rowItem {
+        width: 100%;
+        /* border: 1px solid #a9a9a9; */
+        padding: 5px;
+        margin: 5px;
+      }
+
+      .app-container {
+        display: flex;
+        flex-direction: row;
+        height: 100%;
+      }
+
+      .view-container {
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+    <script
+      type="module"
+      src="https://js.arcgis.com/calcite-components/1.6.1/calcite.esm.js"
+    ></script>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://js.arcgis.com/calcite-components/1.6.1/calcite.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.27/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.27"></script>
+
+    <script>
+      require([
+        "esri/config",
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/core/reactiveUtils",
+        "esri/geometry/support/webMercatorUtils",
+        "esri/widgets/Search",
+      ], (
+        esriConfig,
+        EsriMap,
+        EsriMapView,
+        EsriReactiveUtils,
+        EsriWMUtils,
+        EsriSearch
+      ) => {
+        // esriConfig.apiKey = "YOUR_API_KEY"
+
+        let search = null;
+
+        const copy2ClipBoard = (evt) => {
+          const clp = navigator.clipboard
+            .writeText(evt.target.parentElement.parentElement.value)
+            .then(
+              () => {
+                console.log("Copied");
+                document.getElementById("copyAlert").open = true;
+              },
+              (err) => {
+                console.log("Error");
+              }
+            );
+        };
+
+        const map = new EsriMap({
+          basemap: "topo-vector",
+        });
+
+        const view = new EsriMapView({
+          container: "viewDiv",
+          center: [0, 0],
+          zoom: 3,
+          map: map,
+          constraints: {
+            snapToZoom: true,
+          },
+        });
+
+        const viewDidLoad = () => {
+          console.log("view did load");
+
+          EsriReactiveUtils.watch(
+            () => [
+              view.center,
+              view.extent,
+              view.zoom,
+              view.scale,
+              view.stationary,
+            ],
+            ([center, extent, zoom, scale, stationary]) => {
+              if (stationary) {
+                document.getElementById(
+                  "extentCntrl"
+                ).value = `${JSON.stringify(extent, null, 4)}`;
+
+                document.getElementById(
+                  "centerCntrl"
+                ).value = `${center.x}, ${center.y}`;
+
+                document.getElementById("scaleCntrl").value = scale;
+
+                document.getElementById("zoomCntrl").value = zoom;
+
+                const wgsExtent = EsriWMUtils.webMercatorToGeographic(extent);
+
+                document.getElementById(
+                  "wgsExtentCntrl"
+                ).value = `${JSON.stringify(wgsExtent, null, 4)}`;
+
+                const wgsCenter = EsriWMUtils.webMercatorToGeographic(center);
+                document.getElementById(
+                  "wgsCenterCntrl"
+                ).value = `${wgsCenter.x}, ${wgsCenter.y}`;
+              }
+            }
+          );
+
+          search = new EsriSearch({ view: view });
+          view.ui.add(search, { position: "top-right" });
+        };
+
+        view.when(viewDidLoad);
+
+        const btns = document
+          .querySelectorAll("calcite-button")
+          .forEach((btn) => {
+            btn.addEventListener("click", copy2ClipBoard);
+          });
+      });
+    </script>
+  </head>
+
+  <body>
+    <calcite-alert
+      id="copyAlert"
+      kind="success"
+      icon="copy-to-clipboard"
+      auto-close
+      auto-close-duration="fast"
+      placement="bottom-start"
+    >
+      <div slot="title"></div>
+    </calcite-alert>
+    <div class="app-container">
+      <div
+        id="viewDiv"
+        class="view-container"
+      ></div>
+      <div
+        id="cntrlDiv"
+        class="esri-widget"
+      >
+        <div class="rowItem">
+          <h3>Map</h3>
+
+          <calcite-label
+            >Zoom level
+            <calcite-input
+              id="zoomCntrl"
+              read-only
+            >
+              <div slot="action">
+                <calcite-button icon-start="copy-to-clipboard"></calcite-button>
+              </div>
+            </calcite-input>
+            <calcite-tooltip reference-element="sample-button"
+              >Copy zoom level</calcite-tooltip
+            >
+          </calcite-label>
+
+          <calcite-label
+            >Scale
+            <calcite-input
+              id="scaleCntrl"
+              read-only
+            >
+              <div slot="action">
+                <calcite-button
+                  id="sample-button"
+                  icon-start="copy-to-clipboard"
+                ></calcite-button>
+              </div>
+            </calcite-input>
+            <calcite-tooltip reference-element="sample-button"
+              >Copy map scale</calcite-tooltip
+            >
+          </calcite-label>
+        </div>
+
+        <div class="rowItem">
+          <calcite-tabs layout="center">
+            <calcite-tab-nav slot="title-group">
+              <calcite-tab-title selected>WGS85 (4326)</calcite-tab-title>
+              <calcite-tab-title>WebMercator (102100)</calcite-tab-title>
+            </calcite-tab-nav>
+
+            <calcite-tab selected>
+              <calcite-label
+                >Center
+                <calcite-input
+                  id="wgsCenterCntrl"
+                  read-only
+                >
+                  <div slot="action">
+                    <calcite-button
+                      icon-start="copy-to-clipboard"
+                    ></calcite-button>
+                  </div>
+                </calcite-input>
+                <calcite-tooltip reference-element="sample-button"
+                  >Copy center
+                </calcite-tooltip>
+              </calcite-label>
+              <calcite-label
+                >Extent
+                <calcite-text-area
+                  id="wgsExtentCntrl"
+                  name="extentCntrl"
+                  rows="10"
+                  read-only
+                >
+                  <calcite-button
+                    slot="footer-end"
+                    icon-start="copy-to-clipboard"
+                  ></calcite-button>
+                </calcite-text-area>
+              </calcite-label>
+            </calcite-tab>
+            <calcite-tab>
+              <calcite-label
+                >Center
+                <calcite-input
+                  id="centerCntrl"
+                  read-only
+                >
+                  <div slot="action">
+                    <calcite-button
+                      icon-start="copy-to-clipboard"
+                    ></calcite-button>
+                  </div>
+                </calcite-input>
+                <calcite-tooltip reference-element="sample-button"
+                  >Copy center
+                </calcite-tooltip>
+              </calcite-label>
+              <calcite-label
+                >Extent
+                <calcite-text-area
+                  id="extentCntrl"
+                  name="extentCntrl"
+                  rows="10"
+                  read-only
+                >
+                  <calcite-button
+                    slot="footer-end"
+                    icon-start="copy-to-clipboard"
+                  ></calcite-button>
+                </calcite-text-area>
+              </calcite-label>
+            </calcite-tab>
+          </calcite-tabs>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
