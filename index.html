@@ -8,6 +8,7 @@
     <title>X-Tent</title>
 
     <style>
+
       html,
       body {
         padding: 0;
@@ -37,16 +38,31 @@
         height: 100%;
       }
 
-      .view-container {
+      .map-container {
+        width:100%;
+        height:100%;
+        display:flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .view-container-full-size {
         width: 100%;
         height: 100%;
       }
+
+      .view-container-size-1 {
+        width:1000px;
+        height:400px;
+      }
+    
     </style>
 
     <script
       type="module"
       src="https://js.arcgis.com/calcite-components/1.6.1/calcite.esm.js"
     ></script>
+
     <link
       rel="stylesheet"
       type="text/css"
@@ -174,6 +190,18 @@
           .forEach((btn) => {
             btn.addEventListener("click", copy2ClipBoard);
           });
+        
+        document.getElementById('mapSizeCntrl').addEventListener('calciteSelectChange',()=>{
+          console.log('select did change');
+          if (event.target.value === 'example-app'){
+            document.getElementById('viewDiv').classList.remove('view-container-full-size');
+            document.getElementById('viewDiv').classList.add('view-container-size-1');
+          } else {
+            document.getElementById('viewDiv').classList.remove('view-container-size-1');
+            document.getElementById('viewDiv').classList.add('view-container-full-size');
+          }
+        });
+
       });
     </script>
   </head>
@@ -189,18 +217,22 @@
     >
       <div slot="title"></div>
     </calcite-alert>
+    
     <div class="app-container">
-      <div
-        id="viewDiv"
-        class="view-container"
-      ></div>
-      <div
-        id="cntrlDiv"
-        class="esri-widget"
-      >
+      <div class='map-container'>
+        <div id="viewDiv" class="view-container-full-size"></div>
+      </div>
+      <div id="cntrlDiv" class="esri-widget">
         <div class="rowItem">
+          <calcite-select id="mapSizeCntrl">
+            <calcite-option value="full-size">Full Size</calcite-option>
+            <calcite-option value="example-app">1000px x 800px</calcite-option>
+          </calcite-select>
+        </div>
+        <div class="rowItem">
+          
           <h3>Map</h3>
-
+          
           <calcite-label
             >Zoom level
             <calcite-input
@@ -234,7 +266,6 @@
             >
           </calcite-label>
         </div>
-
         <div class="rowItem">
           <calcite-tabs layout="center">
             <calcite-tab-nav slot="title-group">
