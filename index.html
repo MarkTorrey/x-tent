@@ -8,7 +8,6 @@
     <title>X-Tent</title>
 
     <style>
-
       html,
       body {
         padding: 0;
@@ -39,9 +38,9 @@
       }
 
       .map-container {
-        width:100%;
-        height:100%;
-        display:flex;
+        width: 100%;
+        height: 100%;
+        display: flex;
         justify-content: center;
         align-items: center;
       }
@@ -52,10 +51,9 @@
       }
 
       .view-container-size-1 {
-        width:1000px;
-        height:400px;
+        width: 1000px;
+        height: 400px;
       }
-    
     </style>
 
     <script
@@ -85,6 +83,7 @@
         "esri/widgets/Search",
         "esri/widgets/BasemapGallery",
         "esri/widgets/Expand",
+        "esri/layers/Layer",
       ], (
         esriConfig,
         EsriMap,
@@ -93,22 +92,49 @@
         EsriWMUtils,
         EsriSearch,
         EsriBasemapGallery,
-        EsriExpand
+        EsriExpand,
+        EsriLayer
       ) => {
         // esriConfig.apiKey = "YOUR_API_KEY"
 
+        const setAlert = (setOpen, msg, title) => {
+          document.getElementById("copyAlert").open = setOpen;
+          document.getElementById("alertTitle").innerHTML = title;
+          document.getElementById("alertMessage").innerHTML = msg;
+        };
         const copy2ClipBoard = (evt) => {
-          const clp = navigator.clipboard
-            .writeText(evt.target.parentElement.parentElement.value)
-            .then(
-              () => {
-                console.log("Copied");
-                document.getElementById("copyAlert").open = true;
+          const label =
+            evt.target.parentElement.parentElement.parentElement.innerText;
+          const v = evt.target.parentElement.parentElement.value;
+          const clp = navigator.clipboard.writeText(v).then(
+            () => {
+              console.log("Copied");
+              setAlert(
+                true,
+                `${label} value <b>${v}</b> copied to clipboard`,
+                "Copy"
+              );
+            },
+            (err) => {
+              console.log("Error");
+            }
+          );
+        };
+
+        const addLayerToMap = () => {
+          const v = document.getElementById("itemIdInput").value;
+          if (v) {
+            const l = EsriLayer.fromPortalItem({
+              portalItem: {
+                id: v,
               },
-              (err) => {
-                console.log("Error");
-              }
-            );
+            }).then((lyr) => {
+              map.add(lyr);
+              lyr.when(() => {
+                view.extent = lyr.fullExtent;
+              });
+            });
+          }
         };
 
         const map = new EsriMap({
@@ -188,20 +214,33 @@
         const btns = document
           .querySelectorAll("calcite-button")
           .forEach((btn) => {
-            btn.addEventListener("click", copy2ClipBoard);
+            if (btn.name === "addLayerBtn") {
+              btn.addEventListener("click", addLayerToMap);
+            } else {
+              btn.addEventListener("click", copy2ClipBoard);
+            }
           });
-        
-        document.getElementById('mapSizeCntrl').addEventListener('calciteSelectChange',()=>{
-          console.log('select did change');
-          if (event.target.value === 'example-app'){
-            document.getElementById('viewDiv').classList.remove('view-container-full-size');
-            document.getElementById('viewDiv').classList.add('view-container-size-1');
-          } else {
-            document.getElementById('viewDiv').classList.remove('view-container-size-1');
-            document.getElementById('viewDiv').classList.add('view-container-full-size');
-          }
-        });
 
+        document
+          .getElementById("mapSizeCntrl")
+          .addEventListener("calciteSelectChange", () => {
+            console.log("select did change");
+            if (event.target.value === "example-app") {
+              document
+                .getElementById("viewDiv")
+                .classList.remove("view-container-full-size");
+              document
+                .getElementById("viewDiv")
+                .classList.add("view-container-size-1");
+            } else {
+              document
+                .getElementById("viewDiv")
+                .classList.remove("view-container-size-1");
+              document
+                .getElementById("viewDiv")
+                .classList.add("view-container-full-size");
+            }
+          });
       });
     </script>
   </head>
@@ -215,14 +254,31 @@
       auto-close-duration="fast"
       placement="bottom-start"
     >
-      <div slot="title"></div>
-    </calcite-alert>
-    
-    <div class="app-container">
-      <div class='map-container'>
-        <div id="viewDiv" class="view-container-full-size"></div>
+      <div
+        slot="title"
+        name="alertTitle"
+        id="alertTitle"
+      ></div>
+      <div
+        slot="message"
+        name="alertMessage"
+        id="alertMessage"
+      >
+        We thought you might want to take a look
       </div>
-      <div id="cntrlDiv" class="esri-widget">
+    </calcite-alert>
+
+    <div class="app-container">
+      <div class="map-container">
+        <div
+          id="viewDiv"
+          class="view-container-full-size"
+        ></div>
+      </div>
+      <div
+        id="cntrlDiv"
+        class="esri-widget"
+      >
         <div class="rowItem">
           <calcite-select id="mapSizeCntrl">
             <calcite-option value="full-size">Full Size</calcite-option>
@@ -230,9 +286,24 @@
           </calcite-select>
         </div>
         <div class="rowItem">
-          
+          <calcite-label>
+            Add a reference layer
+            <calcite-input
+              id="itemIdInput"
+              placeholder="Layer item ID (b5d71d19fd4b43fbb88abf07773ec0c7)"
+            >
+              <calcite-button
+                slot="action"
+                name="addLayerBtn"
+              >
+                Add to map
+              </calcite-button>
+            </calcite-input>
+          </calcite-label>
+        </div>
+        <div class="rowItem">
           <h3>Map</h3>
-          
+
           <calcite-label
             >Zoom level
             <calcite-input
@@ -267,7 +338,10 @@
           </calcite-label>
         </div>
         <div class="rowItem">
-          <calcite-tabs bordered=true layout="center">
+          <calcite-tabs
+            bordered="true"
+            layout="center"
+          >
             <calcite-tab-nav slot="title-group">
               <calcite-tab-title selected>WGS84 (4326)</calcite-tab-title>
               <calcite-tab-title>WebMercator (102100)</calcite-tab-title>
