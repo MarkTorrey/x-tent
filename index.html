@@ -97,8 +97,20 @@
       ) => {
         // esriConfig.apiKey = "YOUR_API_KEY"
 
-        const setAlert = (setOpen, msg, title) => {
-          document.getElementById("copyAlert").open = setOpen;
+        const setAlert = (setOpen, msg, title, kind) => {
+          const alertElement = document.getElementById("copyAlert");
+
+          if (!kind) {
+            kind = "info";
+          }
+
+          if (kind === "danger") {
+            alertElement.setAttribute("icon", "exclamation-mark-circle");
+          } else {
+            alertElement.setAttribute("icon", "copy-to-clipboard");
+          }
+          alertElement.setAttribute("kind", kind);
+          alertElement.open = setOpen;
           document.getElementById("alertTitle").innerHTML = title;
           document.getElementById("alertMessage").innerHTML = msg;
         };
@@ -112,7 +124,8 @@
               setAlert(
                 true,
                 `${label} value <b>${v}</b> copied to clipboard`,
-                "Copy"
+                "Copy",
+                "success"
               );
             },
             (err) => {
@@ -128,12 +141,18 @@
               portalItem: {
                 id: v,
               },
-            }).then((lyr) => {
-              map.add(lyr);
-              lyr.when(() => {
-                view.extent = lyr.fullExtent;
-              });
-            });
+            }).then(
+              (lyr) => {
+                map.add(lyr);
+                lyr.when(() => {
+                  view.extent = lyr.fullExtent;
+                });
+              },
+              (err) => {
+                setAlert(true, err.message, `Unable to add ${v}`, "danger");
+                document.getElementById("itemIdInput").value = "";
+              }
+            );
           }
         };
 
