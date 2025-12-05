@@ -56,35 +56,16 @@
       }
     </style>
 
-    <script
-      type="module"
-      src="https://js.arcgis.com/calcite-components/1.6.1/calcite.esm.js"
-    ></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/light/main.css" />
 
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://js.arcgis.com/calcite-components/1.6.1/calcite.css"
-    />
+    <script type="module" src="https://js.arcgis.com/calcite-components/3.3.3/calcite.esm.js"></script>
+    
+    <!-- Load the JavaScript Maps SDK core API -->
+    <script src="https://js.arcgis.com/4.34/"></script>
 
-    <link
-      rel="stylesheet"
-      href="https://js.arcgis.com/4.27/esri/themes/light/main.css"
-    />
-    <script src="https://js.arcgis.com/4.27"></script>
+    <script type="module">
 
-    <script>
-      require([
-        "esri/config",
-        "esri/Map",
-        "esri/views/MapView",
-        "esri/core/reactiveUtils",
-        "esri/geometry/support/webMercatorUtils",
-        "esri/widgets/Search",
-        "esri/widgets/BasemapGallery",
-        "esri/widgets/Expand",
-        "esri/layers/Layer",
-      ], (
+      const [
         esriConfig,
         EsriMap,
         EsriMapView,
@@ -94,7 +75,9 @@
         EsriBasemapGallery,
         EsriExpand,
         EsriLayer
-      ) => {
+      ] = await $arcgis.import([
+        "@arcgis/core/config","@arcgis/core/Map","@arcgis/core/views/MapView","@arcgis/core/core/reactiveUtils","@arcgis/core/geometry/support/webMercatorUtils","@arcgis/core/widgets/Search","@arcgis/core/widgets/BasemapGallery","@arcgis/core/widgets/Expand","@arcgis/core/layers/Layer"]);
+
         const setAlert = (setOpen, msg, title, kind) => {
           const alertElement = document.getElementById("copyAlert");
 
@@ -259,7 +242,6 @@
                 .classList.add("view-container-full-size");
             }
           });
-      });
     </script>
   </head>
 
